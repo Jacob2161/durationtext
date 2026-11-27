@@ -4,7 +4,7 @@
 // Parse takes a Go duration (90m, 1h30m) or a whole number of days (30d).
 // Format writes positive whole days as Nd and anything else as a Go duration
 // without trailing zero units (10m, not 10m0s), so Parse(Format(d)) == d for
-// every duration. Value adapts both to the flag and pflag packages.
+// every duration. Duration adapts both to the flag and pflag packages.
 package durationtext
 
 import (
@@ -52,31 +52,38 @@ func Format(duration time.Duration) string {
 	return text
 }
 
-// Value is a command line flag value over a time.Duration that Parse reads and
+// Duration is a command line flag over a time.Duration that Parse reads and
 // Format writes. It satisfies flag.Value and pflag.Value:
 //
-//	flags.Var(durationtext.NewValue(&timeout, 10*time.Minute), "timeout", "how long to wait")
-type Value time.Duration
+//	flags.Var(
+//		durationtext.NewDuration(&timeout, 10*time.Minute),
+//		"timeout",
+//		"how long to wait",
+//	)
+//
+// A *time.Duration converts to a *Duration directly, for a flag whose
+// default is already in place: (*durationtext.Duration)(&timeout).
+type Duration time.Duration
 
-// NewValue sets *target to defaultValue and returns a Value that sets
-// *target when the flag is parsed.
-func NewValue(target *time.Duration, defaultValue time.Duration) *Value {
-	*target = defaultValue
-	return (*Value)(target)
+// NewDuration sets *target to defaultDuration and returns a Duration that
+// sets *target when the flag is parsed.
+func NewDuration(target *time.Duration, defaultDuration time.Duration) *Duration {
+	*target = defaultDuration
+	return (*Duration)(target)
 }
 
 // String writes the duration as Format does.
-func (v *Value) String() string { return Format(time.Duration(*v)) }
+func (d *Duration) String() string { return Format(time.Duration(*d)) }
 
 // Set reads the duration as Parse does.
-func (v *Value) Set(text string) error {
+func (d *Duration) Set(text string) error {
 	parsed, err := Parse(text)
 	if err != nil {
 		return err
 	}
-	*v = Value(parsed)
+	*d = Duration(parsed)
 	return nil
 }
 
-// Type names the value in pflag's help output.
-func (v *Value) Type() string { return "duration" }
+// Type names the flag's type in pflag's help output.
+func (d *Duration) Type() string { return "duration" }

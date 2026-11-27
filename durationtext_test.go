@@ -22,7 +22,7 @@ func TestParseAndFormat(t *testing.T) {
 	}
 	for _, text := range []string{"1.5d", "-1d", "d", "99999999999d", "soon"} {
 		if _, err := Parse(text); err == nil {
-			t.Errorf("Parse(%q) passed", text)
+			t.Errorf("Parse(%q) returned no error, want one", text)
 		}
 	}
 	for duration, want := range map[time.Duration]string{
@@ -60,7 +60,14 @@ func FuzzRoundTrip(f *testing.F) {
 		formatted := Format(parsed)
 		reparsed, err := Parse(formatted)
 		if err != nil || reparsed != parsed {
-			t.Fatalf("Parse(%q) = %s, formatted %q, reparsed %s, %v", text, parsed, formatted, reparsed, err)
+			t.Fatalf(
+				"Parse(%q) = %s, formatted %q, reparsed %s, %v",
+				text,
+				parsed,
+				formatted,
+				reparsed,
+				err,
+			)
 		}
 	})
 }
@@ -74,7 +81,35 @@ func FuzzFormat(f *testing.F) {
 		duration := time.Duration(nanoseconds)
 		reparsed, err := Parse(Format(duration))
 		if err != nil || reparsed != duration {
-			t.Fatalf("Format(%d) = %q, reparsed %s, %v", nanoseconds, Format(duration), reparsed, err)
+			t.Fatalf(
+				"Format(%d) = %q, reparsed %s, %v",
+				nanoseconds,
+				Format(duration),
+				reparsed,
+				err,
+			)
 		}
 	})
+}
+
+// TestDuration sets a converted *time.Duration through flag.Value's methods
+// and leaves it unchanged when the text does not parse.
+func TestDuration(t *testing.T) {
+	timeout := 10 * time.Minute
+	flagDuration := (*Duration)(&timeout)
+	if got := flagDuration.String(); got != "10m" {
+		t.Fatalf("String() = %q, want 10m", got)
+	}
+	if err := flagDuration.Set("2d"); err != nil {
+		t.Fatalf("Set(2d): %v", err)
+	}
+	if timeout != 2*Day {
+		t.Fatalf("after Set(2d), timeout = %s, want 48h", timeout)
+	}
+	if err := flagDuration.Set("soon"); err == nil {
+		t.Fatal("Set(soon) returned no error, want one")
+	}
+	if timeout != 2*Day {
+		t.Fatalf("after a failed Set, timeout = %s, want 48h unchanged", timeout)
+	}
 }

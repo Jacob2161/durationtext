@@ -17,10 +17,14 @@ func ExampleParse() {
 	// Output: 720h0m0s 30d
 }
 
-func ExampleNewValue() {
+func ExampleNewDuration() {
 	flags := flag.NewFlagSet("backup", flag.ContinueOnError)
 	var retention time.Duration
-	flags.Var(durationtext.NewValue(&retention, 7*durationtext.Day), "retention", "how long to keep backups")
+	flags.Var(
+		durationtext.NewDuration(&retention, 7*durationtext.Day),
+		"retention",
+		"how long to keep backups",
+	)
 	if err := flags.Parse([]string{"-retention", "90m"}); err != nil {
 		panic(err)
 	}
