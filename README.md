@@ -24,4 +24,4 @@ flags.Var(durationtext.NewDuration(&timeout, 10*time.Minute), "timeout", "how lo
 - `Duration` satisfies both `flag.Value` and `pflag.Value` (cobra), with no dependency on either.
 - The round trip is fuzz-tested over every int64 duration.
 
-Tested on the two newest Go releases. Licensed under the MIT license.
+Requires Go 1.27. Licensed under the MIT license.
